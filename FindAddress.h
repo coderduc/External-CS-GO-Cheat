@@ -6,7 +6,7 @@ public:
 	static bool Prepare();
 	static bool isgetaddress;
 	static MODULEENTRY32 client, engine;
-	static DWORD dwLocalPlayer;
+	static DWORD dwLocalPlayer,dwEntityList,dwForceJump, dwGlowObjectManager;
 	static DWORD localPlayer;
 };
 
