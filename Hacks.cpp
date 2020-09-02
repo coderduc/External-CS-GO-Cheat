@@ -106,7 +106,7 @@ void Hacks::skinChanger()
 
 		switch (WeaponID)
 		{
-		case 1://USP-S
+		case 1://DE
 			PaintKit = 527;
 			break;
 		case 7://AK47
@@ -121,9 +121,6 @@ void Hacks::skinChanger()
 		case 16://M4A4
 			PaintKit = 255;
 			break;
-		case 61://USP-S
-			PaintKit = 504;
-			break;
 		case 10://FAMAS
 			PaintKit = 154;
 			break;
@@ -131,19 +128,13 @@ void Hacks::skinChanger()
 			PaintKit = 433;
 			break;
 		case 19://P90
-			PaintKit = 156;
+			PaintKit = 359;
 			break;
 		case 27://MAG-7
 			PaintKit = 431;
 			break;
 		case 36://P250
-			PaintKit = 464;
-			break;
-		case 39://SSG-08
-			PaintKit = 487;
-			break;
-		case 60://M4A1-S
-			PaintKit = 430;
+			PaintKit = 551;
 			break;
 		}
 
