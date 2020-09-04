@@ -87,4 +87,7 @@ struct Netvars
 	const DWORD m_flCustomBloomScale = 0x9E4;
 	const DWORD m_flCustomAutoExposureMin = 0x9DC;
 	const DWORD m_flCustomAutoExposureMax = 0x9E0;
+	const DWORD m_iViewModelIndex = 0x3240;
+	const DWORD m_nModelIndex = 0x258;
+	const DWORD m_hViewModel = 0x32F8;
 }var;

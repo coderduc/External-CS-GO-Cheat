@@ -1,5 +1,42 @@
 #include "Hacks.h"
 #include "Offset.h"
+#include "Classes.h"
+
+class data_cv : Hacks
+{
+public:
+	DWORD base;
+	data_cv(DWORD lpBase) : base(lpBase) {}
+	data_cv(LPCVOID lpBase) : base((DWORD)lpBase) {}
+
+	template <class _T>
+	const data_cv& operator >> (_T& var) {
+		return readMem<_T>(base);
+	}
+
+	template <class _W>
+	const data_cv& operator << (_W var) {
+		return writeMem<_W>(base, var);
+	}
+};
+
+class FakeClass
+{
+public:
+	FakeClass(DWORD client) : lpBase(0) {}
+
+	data_cv FakeClass::operator[](DWORD address) const
+	{
+		return data_cv(lpBase + address);
+	}
+
+	data_cv FakeClass::operator[](LPCVOID address) const
+	{
+		return data_cv(lpBase + (DWORD)address);
+	}
+private:
+	DWORD lpBase;
+};
 
 void Hacks::EntryPoint()
 {
@@ -7,11 +44,12 @@ void Hacks::EntryPoint()
 	while (true)
 	{
 		Prepare();
+
 		skinChanger();
 		//TriggerBot();
 		//Bunnyhop();
 		//NoFlash();
-		//GlowESP();
+		GlowESP();
 	}
 }
 
@@ -31,6 +69,7 @@ void Hacks::TriggerBot()
 		}
 	}
 }
+
 void Hacks::Bunnyhop()
 {
 	BYTE flag = readMem<BYTE>(localPlayer + var.m_fFlags);
@@ -61,20 +100,20 @@ void Hacks::GlowESP()
 
 			if (myTeam == entityTeam)
 			{
-				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x4)),0);
-				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x8)),0);
-				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0xC)),0);
+				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x4)), 0);
+				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x8)), 0);
+				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0xC)), 0);
 				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x10)), 0.4);
 			}
 			else
 			{
-				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x4)),2);
+				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x4)), 2);
 				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x8)), 0);
-				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0xC)),0);
-				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x10)),0.4);
+				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0xC)), 0);
+				writeMem<float>((glowObject + ((glowIndx * 0x38) + 0x10)), 0.4);
 			}
 			writeMem<BYTE>((glowObject + ((glowIndx * 0x38) + 0x24)), 1);
-			writeMem<BYTE>((glowObject + ((glowIndx * 0x38) + 0x25)),0);
+			writeMem<BYTE>((glowObject + ((glowIndx * 0x38) + 0x25)), 0);
 		}
 	}
 }
@@ -88,6 +127,14 @@ void Hacks::ForceUpdate()
 void Hacks::skinChanger()
 {
 	if (GetAsyncKeyState(VK_F2) & 1) ForceUpdate();
+	
+	int wanted_model = 768;
+	const int v_knife_default_ct = 663;
+	const int v_knife_default_t = 688;
+	int dest_model_t = wanted_model - v_knife_default_t;
+	int dest_model_ct = wanted_model - v_knife_default_ct;
+	int ModelIndex = 0;
+
 	int Local = readMem<int>((DWORD)client.modBaseAddr + dwLocalPlayer);
 	int ActiveWeapon = readMem<int>(Local + var.m_hActiveWeapon) & 0xFFF;
 	ActiveWeapon = readMem<int>((DWORD)client.modBaseAddr + dwEntityList + (ActiveWeapon - 1) * 0x10);
@@ -99,7 +146,7 @@ void Hacks::skinChanger()
 		int WeaponID = readMem<int>(Weapon + var.m_iItemDefinitionIndex);
 
 		int PaintKit = 0;
-		int EntityQuality = 0;
+		int EntityQuality = -3;
 		float Wear = 0.0001f;
 		int Seed = 0;
 		int StatTrack = 1337;
@@ -136,8 +183,37 @@ void Hacks::skinChanger()
 		case 36://P250
 			PaintKit = 551;
 			break;
+		case 2: //Dual Barreta
+			PaintKit = 307;
+			break;
+		case 3: //Five-Seven
+			PaintKit = 464;
+			break;
+		case 8://AUG
+			PaintKit = 167;
+			break;
+		case 13://Galil AR
+			PaintKit = 428;
+			break;
+		case 30: //TEC-9
+			PaintKit = 614;
+			break;
+		case 35: //Nova
+			PaintKit = 358;
+			break;
+		case 64: //R8
+			PaintKit = 523;
+			break;
+		case 32: //R2000
+			PaintKit = 275;
+			break;
+		case 38://SCAR-20
+			PaintKit = 597;
+			break;
+		case 11://G3SG1
+			PaintKit = 465;
+			break;
 		}
-
 		if (PaintKit != 0)
 		{
 			if (readMem<int>(Weapon + var.m_iItemIDHigh) != -1)
@@ -148,16 +224,34 @@ void Hacks::skinChanger()
 			writeMem<int>(Weapon + var.m_nFallbackPaintKit, PaintKit);
 			writeMem<int>(Weapon + var.m_nFallbackStatTrak, StatTrack);
 			writeMem<float>(Weapon + var.m_flFallbackWear, Wear);
+		}
 
-			/*if (StatTrack >= 0)
-				writeMem<int>(Weapon + var.m_iEntityQuality, 9);
-			else
-				writeMem<int>(Weapon + var.m_iEntityQuality, EntityQuality);*/
+		{
+			DWORD activeWeapon = readMem<DWORD>(localPlayer + var.m_hActiveWeapon) & 0xfff;
+			activeWeapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (activeWeapon - 1) * 0x10);
+			short weaponID = readMem<short>( activeWeapon + var.m_iItemDefinitionIndex);
+			int weaponViewModelID = readMem<int>(activeWeapon + var.m_iViewModelIndex);
+
+			if (weaponID == WEAPON_KNIFE || weaponID == WEAPON_KNIFE_T)
+			{
+				if (ActiveWeaponID == WEAPON_KNIFE && weaponViewModelID > 0)
+				{
+					ModelIndex = weaponViewModelID + dest_model_ct;
+				}
+				else if (ActiveWeaponID == WEAPON_KNIFE_T && weaponViewModelID > 0)
+				{
+					ModelIndex = weaponViewModelID + dest_model_t;
+				}
+
+				int KnifeViewModel = readMem<int>(Local + var.m_hViewModel) & 0xfff;
+				KnifeViewModel = readMem<int>((DWORD)client.modBaseAddr + dwEntityList + (KnifeViewModel - 1) * 0x10);
+				writeMem<int>(KnifeViewModel + var.m_nModelIndex, ModelIndex);
+			}
 		}
 	}
 }
 
-Vector3 Hacks::PlayerVelocity(){
-	return readMem<Vector3>(localPlayer + var.m_vecVelocity);
-}
+Vector3 Hacks::PlayerVelocity() {
+		return readMem<Vector3>(localPlayer + var.m_vecVelocity);
+	}
 
