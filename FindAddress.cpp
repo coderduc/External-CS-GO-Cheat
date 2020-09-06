@@ -6,8 +6,8 @@ FindAddress::dwEntityList = NULL,
 FindAddress::dwForceJump = NULL,
 FindAddress::dwGlowObjectManager = NULL,
 FindAddress::localPlayer = NULL,
-FindAddress::dwClientState = NULL;
-				
+FindAddress::dwClientState = NULL,
+FindAddress::dwPrecacheInfo;
 MODULEENTRY32   FindAddress::client,
 				FindAddress::engine;
 
@@ -54,8 +54,15 @@ bool FindAddress::Prepare()
 			dwClientState = FindPattern::FindPattern((DWORD)engine.modBaseAddr, (DWORD)engine.modBaseSize, (PBYTE)("\xA1\x00\x00\x00\x00\x33\xD2\x6A\x00\x6A\x00\x33\xC9\x89\xB0"), "0????000?0?0000").Base;
 			if (dwClientState)
 			{
-				dwClientState = readMem<DWORD>(dwClientState + 0x1);//vkl chua thay pattern
+				dwClientState = readMem<DWORD>(dwClientState + 0x1);
 				dwClientState -= (DWORD)engine.modBaseAddr;
+			}
+		}
+		/*dwPrecacheInfo*/{
+			dwPrecacheInfo = FindPattern::FindPattern((DWORD)engine.modBaseAddr, (DWORD)engine.modBaseSize, (PBYTE)("\x3B\x81\x00\x00\x00\x00\x75\x11\x8B\x45\x00\x83\xF8\x00"), "00????0000?00?").Base;
+			if (dwPrecacheInfo)
+			{
+				dwPrecacheInfo = readMem<DWORD>(dwPrecacheInfo + 0x2);
 			}
 		}
 		isgetaddress = true;

@@ -135,7 +135,7 @@ UINT Hacks::GetModelIndexByName(const char* modelName)
 	client_module[dwLocalPlayer] >> LocalPlayer;
 	engine_module[dwClientState] >> cstate;
 	// CClientState + 0x529C -> INetworkStringTable* m_pModelPrecacheTable
-	cstate[0x529C] >> nst;
+	cstate[dwPrecacheInfo] >> nst;
 	// INetworkStringTable + 0x40 -> INetworkStringDict* m_pItems
 	nst[0x40] >> nsd;
 	// INetworkStringDict + 0xC -> void* m_pItems
