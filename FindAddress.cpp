@@ -2,10 +2,11 @@
 
 bool			FindAddress::isgetaddress = false;
 DWORD		    FindAddress::dwLocalPlayer = NULL,
-				FindAddress::dwEntityList = NULL,
-				FindAddress::dwForceJump = NULL,
-				FindAddress::dwGlowObjectManager = NULL,
-				FindAddress::localPlayer = NULL;
+FindAddress::dwEntityList = NULL,
+FindAddress::dwForceJump = NULL,
+FindAddress::dwGlowObjectManager = NULL,
+FindAddress::localPlayer = NULL,
+FindAddress::dwClientState = NULL;
 				
 MODULEENTRY32   FindAddress::client,
 				FindAddress::engine;
@@ -46,6 +47,15 @@ bool FindAddress::Prepare()
 				dwGlowObjectManager = readMem<DWORD>(dwGlowObjectManager + 0xE);
 				dwGlowObjectManager -= (DWORD)client.modBaseAddr;
 				dwGlowObjectManager += 0x4;
+			}
+			
+		}
+		/*dwClientState*/{
+			dwClientState = FindPattern::FindPattern((DWORD)engine.modBaseAddr, (DWORD)engine.modBaseSize, (PBYTE)("\xA1\x00\x00\x00\x00\x33\xD2\x6A\x00\x6A\x00\x33\xC9\x89\xB0"), "0????000?0?0000").Base;
+			if (dwClientState)
+			{
+				dwClientState = readMem<DWORD>(dwClientState + 0x1);//vkl chua thay pattern
+				dwClientState -= (DWORD)engine.modBaseAddr;
 			}
 		}
 		isgetaddress = true;

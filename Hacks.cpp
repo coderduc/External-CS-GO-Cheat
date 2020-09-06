@@ -1,8 +1,8 @@
-#include "Hacks.h"
+﻿#include "Hacks.h"
 #include "Offset.h"
 #include "Classes.h"
 
-class data_cv : Hacks
+class data_cv
 {
 public:
 	DWORD base;
@@ -10,10 +10,11 @@ public:
 	data_cv(LPCVOID lpBase) : base((DWORD)lpBase) {}
 
 	template <class _T>
-	const data_cv& operator >> (_T& var) {
-		return readMem<_T>(base);
+	const data_cv& operator >> (_T& var) const
+	{
+		ReadProcessMemory(FindPattern::pHandle, (LPVOID)base, &var, sizeof(var), 0);
+		return *this;
 	}
-
 	template <class _W>
 	const data_cv& operator << (_W var) {
 		return writeMem<_W>(base, var);
@@ -23,7 +24,7 @@ public:
 class FakeClass
 {
 public:
-	FakeClass(DWORD client) : lpBase(0) {}
+	FakeClass(DWORD base = 0) : lpBase(base) {}
 
 	data_cv FakeClass::operator[](DWORD address) const
 	{
@@ -44,12 +45,12 @@ void Hacks::EntryPoint()
 	while (true)
 	{
 		Prepare();
-
-		skinChanger();
+		//NoFlash()
+		skinChanger(507,561);
 		//TriggerBot();
 		//Bunnyhop();
 		//NoFlash();
-		GlowESP();
+		//GlowESP();
 	}
 }
 
@@ -124,134 +125,242 @@ void Hacks::ForceUpdate()
 	writeMem<int>(_dwClientState + 0x174, -1);
 }
 
-void Hacks::skinChanger()
+UINT Hacks::GetModelIndexByName(const char* modelName)
+{
+	DWORD LocalPlayer;
+	FakeClass engine_module = (DWORD)engine.modBaseAddr;
+	FakeClass client_module = (DWORD)client.modBaseAddr;
+	FakeClass cstate, nst, nsd, nsdi, nsdi_i;
+
+	client_module[dwLocalPlayer] >> LocalPlayer;
+	engine_module[dwClientState] >> cstate;
+	// CClientState + 0x529C -> INetworkStringTable* m_pModelPrecacheTable
+	cstate[0x529C] >> nst;
+	// INetworkStringTable + 0x40 -> INetworkStringDict* m_pItems
+	nst[0x40] >> nsd;
+	// INetworkStringDict + 0xC -> void* m_pItems
+	nsd[0xC] >> nsdi;
+
+	for (UINT i = 0; i < 1024; i++)
+	{
+		nsdi[0xC + i * 0x34] >> nsdi_i;
+		char str[128] = { 0 };
+		nsdi_i[(DWORD)0] >> str;
+		if (_stricmp(str, modelName) == 0)
+		{
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+UINT Hacks::GetModelIndex(const short itemIndex)
+{
+	UINT ret = 0;
+	switch (itemIndex)
+	{
+	case WEAPON_KNIFE:
+		ret = GetModelIndexByName("models/weapons/v_knife_default_ct.mdl");
+		break;
+	case WEAPON_KNIFE_T:
+		ret = GetModelIndexByName("models/weapons/v_knife_default_t.mdl");
+		break;
+	case WEAPON_KNIFE_BAYONET:
+		ret = GetModelIndexByName("models/weapons/v_knife_bayonet.mdl");
+		break;
+	case WEAPON_KNIFE_FLIP:
+		ret = GetModelIndexByName("models/weapons/v_knife_flip.mdl");
+		break;
+	case WEAPON_KNIFE_GUT:
+		ret = GetModelIndexByName("models/weapons/v_knife_gut.mdl");
+		break;
+	case WEAPON_KNIFE_KARAMBIT:
+		ret = GetModelIndexByName("models/weapons/v_knife_karam.mdl");
+		break;
+	case WEAPON_KNIFE_M9_BAYONET:
+		ret = GetModelIndexByName("models/weapons/v_knife_m9_bay.mdl");
+		break;
+	case WEAPON_KNIFE_TACTICAL:
+		ret = GetModelIndexByName("models/weapons/v_knife_tactical.mdl");
+		break;
+	case WEAPON_KNIFE_FALCHION:
+		ret = GetModelIndexByName("models/weapons/v_knife_falchion_advanced.mdl");
+		break;
+	case WEAPON_KNIFE_SURVIVAL_BOWIE:
+		ret = GetModelIndexByName("models/weapons/v_knife_survival_bowie.mdl");
+		break;
+	case WEAPON_KNIFE_BUTTERFLY:
+		ret = GetModelIndexByName("models/weapons/v_knife_butterfly.mdl");
+		break;
+	case WEAPON_KNIFE_PUSH:
+		ret = GetModelIndexByName("models/weapons/v_knife_push.mdl");
+		break;
+	case WEAPON_KNIFE_URSUS:
+		ret = GetModelIndexByName("models/weapons/v_knife_ursus.mdl");
+		break;
+	case WEAPON_KNIFE_GYPSY_JACKKNIFE:
+		ret = GetModelIndexByName("models/weapons/v_knife_gypsy_jackknife.mdl");
+		break;
+	case WEAPON_KNIFE_STILETTO:
+		ret = GetModelIndexByName("models/weapons/v_knife_stiletto.mdl");
+		break;
+	case WEAPON_KNIFE_WIDOWMAKER:
+		ret = GetModelIndexByName("models/weapons/v_knife_widowmaker.mdl");
+		break;
+	case WEAPON_KNIFE_CSS:
+		ret = GetModelIndexByName("models/weapons/v_knife_css.mdl");
+		break;
+	case WEAPON_KNIFE_CORD:
+		ret = GetModelIndexByName("models/weapons/v_knife_cord.mdl");
+		break;
+	case WEAPON_KNIFE_CANIS:
+		ret = GetModelIndexByName("models/weapons/v_knife_canis.mdl");
+		break;
+	case WEAPON_KNIFE_OUTDOOR:
+		ret = GetModelIndexByName("models/weapons/v_knife_outdoor.mdl");
+		break;
+	case WEAPON_KNIFE_SKELETON:
+		ret = GetModelIndexByName("models/weapons/v_knife_skeleton.mdl");
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+UINT Hacks::GetWeaponSkin(const short Index)
+{
+	UINT PaintKit = 0;
+	switch (Index)
+	{
+	case WEAPON_DEAGLE:
+		PaintKit = 527;
+		break;
+	case WEAPON_AK47:
+		PaintKit = 675;
+		break;
+	case WEAPON_AWP:
+		PaintKit = 344;
+		break;
+	case WEAPON_GLOCK:
+		PaintKit = 353;
+		break;
+	case WEAPON_M4A1:
+		PaintKit = 255;
+		break;
+	case WEAPON_FAMAS:
+		PaintKit = 154;
+		break;
+	case WEAPON_MAC10:
+		PaintKit = 433;
+		break;
+	case WEAPON_P90:
+		PaintKit = 359;
+		break;
+	case WEAPON_MAG7:
+		PaintKit = 431;
+		break;
+	case WEAPON_P250:
+		PaintKit = 551;
+		break;
+	case WEAPON_ELITE:
+		PaintKit = 307;
+		break;
+	case WEAPON_FIVESEVEN:
+		PaintKit = 464;
+		break;
+	case WEAPON_AUG:
+		PaintKit = 167;
+		break;
+	case WEAPON_GALILAR:
+		PaintKit = 428;
+		break;
+	case WEAPON_TEC9:
+		PaintKit = 614;
+		break;
+	case WEAPON_NOVA:
+		PaintKit = 358;
+		break;
+	case WEAPON_REVOLVER:
+		PaintKit = 523;
+		break;
+	case WEAPON_HKP2000:
+		PaintKit = 275;
+		break;
+	case WEAPON_SCAR20:
+		PaintKit = 597;
+		break;
+	case WEAPON_G3SG1:
+		PaintKit = 465;
+		break;
+	case WEAPON_M4A1_SILENCER:
+		PaintKit = 548;
+		break;
+	case WEAPON_USP_SILENCER:
+		PaintKit = 504;
+		break;
+	default:
+		break;
+	}
+	return PaintKit;
+}
+
+void Hacks::skinChanger(const short knifeIndex, const UINT knifeSkin)
 {
 	if (GetAsyncKeyState(VK_F2) & 1) ForceUpdate();
-	
-	int wanted_model = 768;
-	const int v_knife_default_ct = 663;
-	const int v_knife_default_t = 688;
-	int dest_model_t = wanted_model - v_knife_default_t;
-	int dest_model_ct = wanted_model - v_knife_default_ct;
-	int ModelIndex = 0;
-
-	int Local = readMem<int>((DWORD)client.modBaseAddr + dwLocalPlayer);
-	int ActiveWeapon = readMem<int>(Local + var.m_hActiveWeapon) & 0xFFF;
-	ActiveWeapon = readMem<int>((DWORD)client.modBaseAddr + dwEntityList + (ActiveWeapon - 1) * 0x10);
-	short ActiveWeaponID = readMem<short>(ActiveWeapon + var.m_iItemDefinitionIndex);
-	for (int i = 0; i < 8; i++)
+	const int itemIDHigh = -1;
+	const int EntityQuality = 3;
+	const float Wear = 0.0001f;
+	const int StatTrack = 1337;
+	UINT ModelIndex = 0;
+	while (!GetAsyncKeyState(VK_F8))
 	{
-		int Weapon = readMem<int>(Local + var.m_hMyWeapons + i * 0x4) & 0xFFF;
-		Weapon = readMem<int>((DWORD)client.modBaseAddr + dwEntityList + (Weapon - 1) * 0x10);
-		int WeaponID = readMem<int>(Weapon + var.m_iItemDefinitionIndex);
-
-		int PaintKit = 0;
-		int EntityQuality = -3;
-		float Wear = 0.0001f;
-		int Seed = 0;
-		int StatTrack = 1337;
-
-		switch (WeaponID)
+		while (!ModelIndex)
 		{
-		case 1://DE
-			PaintKit = 527;
-			break;
-		case 7://AK47
-			PaintKit = 675;
-			break;
-		case 9://AWM
-			PaintKit = 344;
-			break;
-		case 4://Glock-18
-			PaintKit = 353;
-			break;
-		case 16://M4A4
-			PaintKit = 255;
-			break;
-		case 10://FAMAS
-			PaintKit = 154;
-			break;
-		case 17://MAC-10
-			PaintKit = 433;
-			break;
-		case 19://P90
-			PaintKit = 359;
-			break;
-		case 27://MAG-7
-			PaintKit = 431;
-			break;
-		case 36://P250
-			PaintKit = 551;
-			break;
-		case 2: //Dual Barreta
-			PaintKit = 307;
-			break;
-		case 3: //Five-Seven
-			PaintKit = 464;
-			break;
-		case 8://AUG
-			PaintKit = 167;
-			break;
-		case 13://Galil AR
-			PaintKit = 428;
-			break;
-		case 30: //TEC-9
-			PaintKit = 614;
-			break;
-		case 35: //Nova
-			PaintKit = 358;
-			break;
-		case 64: //R8
-			PaintKit = 523;
-			break;
-		case 32: //R2000
-			PaintKit = 275;
-			break;
-		case 38://SCAR-20
-			PaintKit = 597;
-			break;
-		case 11://G3SG1
-			PaintKit = 465;
-			break;
+			ModelIndex = GetModelIndex(knifeIndex);
 		}
-		if (PaintKit != 0)
+		for (UINT i = 0; i < 8; i++)
 		{
-			if (readMem<int>(Weapon + var.m_iItemIDHigh) != -1)
-				writeMem<int>(Weapon + var.m_iItemIDHigh, -1);
+			DWORD Weapon = readMem<DWORD>(localPlayer + var.m_hMyWeapons + i * 0x4) & 0xFFF;
+			Weapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (Weapon - 1) * 0x10);
+			if (!Weapon) { continue; }
+			short WeaponID = readMem<short>(Weapon + var.m_iItemDefinitionIndex);
+			UINT weaponSkin = GetWeaponSkin(WeaponID);
 
-			writeMem<int>(Weapon + var.m_OriginalOwnerXuidLow, 0);
-			writeMem<int>(Weapon + var.m_OriginalOwnerXuidHigh, 0);
-			writeMem<int>(Weapon + var.m_nFallbackPaintKit, PaintKit);
-			writeMem<int>(Weapon + var.m_nFallbackStatTrak, StatTrack);
-			writeMem<float>(Weapon + var.m_flFallbackWear, Wear);
-		}
-
-		{
-			DWORD activeWeapon = readMem<DWORD>(localPlayer + var.m_hActiveWeapon) & 0xfff;
-			activeWeapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (activeWeapon - 1) * 0x10);
-			short weaponID = readMem<short>( activeWeapon + var.m_iItemDefinitionIndex);
-			int weaponViewModelID = readMem<int>(activeWeapon + var.m_iViewModelIndex);
-
-			if (weaponID == WEAPON_KNIFE || weaponID == WEAPON_KNIFE_T)
+			if (WeaponID == WEAPON_KNIFE || WeaponID == WEAPON_KNIFE_T || WeaponID == knifeIndex)
 			{
-				if (ActiveWeaponID == WEAPON_KNIFE && weaponViewModelID > 0)
-				{
-					ModelIndex = weaponViewModelID + dest_model_ct;
-				}
-				else if (ActiveWeaponID == WEAPON_KNIFE_T && weaponViewModelID > 0)
-				{
-					ModelIndex = weaponViewModelID + dest_model_t;
-				}
-
-				int KnifeViewModel = readMem<int>(Local + var.m_hViewModel) & 0xfff;
-				KnifeViewModel = readMem<int>((DWORD)client.modBaseAddr + dwEntityList + (KnifeViewModel - 1) * 0x10);
-				writeMem<int>(KnifeViewModel + var.m_nModelIndex, ModelIndex);
+				writeMem<short>(Weapon + var.m_iItemDefinitionIndex, knifeIndex);
+				writeMem<UINT>(Weapon + var.m_nModelIndex, ModelIndex);
+				writeMem<UINT>(Weapon + var.m_iViewModelIndex, ModelIndex);
+				writeMem<int>(Weapon + var.m_iEntityQuality, EntityQuality);
+				weaponSkin = knifeSkin;
+			}
+			if (weaponSkin)
+			{
+				writeMem<int>(Weapon + var.m_iItemIDHigh, itemIDHigh);
+				writeMem<UINT>(Weapon + var.m_nFallbackPaintKit, weaponSkin);
+				writeMem<float>(Weapon + var.m_flFallbackWear, Wear);
+				writeMem<int>(Weapon + var.m_nFallbackStatTrak, StatTrack);
 			}
 		}
+
+		DWORD activeWeapon = readMem<DWORD>(localPlayer + var.m_hActiveWeapon) & 0xfff;
+		activeWeapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (activeWeapon - 1) * 0x10);
+		if (!activeWeapon) { continue; }
+
+		short weaponIndex = readMem<short>(activeWeapon + var.m_iItemDefinitionIndex);
+		if (weaponIndex != knifeIndex) { continue; }
+
+		DWORD knifeViewModel = readMem<DWORD>(localPlayer + var.m_hViewModel) & 0xfff;
+		knifeViewModel = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (knifeViewModel - 1) * 0x10);
+		if (knifeViewModel == 0) { continue; }
+
+		writeMem<UINT>(knifeViewModel + var.m_nModelIndex, ModelIndex);
 	}
 }
 
 Vector3 Hacks::PlayerVelocity() {
-		return readMem<Vector3>(localPlayer + var.m_vecVelocity);
-	}
+	return readMem<Vector3>(localPlayer + var.m_vecVelocity);
+}
 
