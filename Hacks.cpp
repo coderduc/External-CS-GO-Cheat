@@ -17,7 +17,7 @@ public:
 	}
 	template <class _W>
 	const data_cv& operator << (_W var) {
-		return writeMem<_W>(base, var);
+		WriteProcessMemory(FindPattern::pHandle, (LPVOID)base, var, sizeof(var), 0);s
 	}
 };
 
@@ -250,7 +250,7 @@ UINT Hacks::GetWeaponSkin(const short Index)
 		PaintKit = 255;
 		break;
 	case WEAPON_FAMAS:
-		PaintKit = 154;
+		PaintKit = 626;
 		break;
 	case WEAPON_MAC10:
 		PaintKit = 433;
@@ -271,7 +271,7 @@ UINT Hacks::GetWeaponSkin(const short Index)
 		PaintKit = 464;
 		break;
 	case WEAPON_AUG:
-		PaintKit = 167;
+		PaintKit = 33;
 		break;
 	case WEAPON_GALILAR:
 		PaintKit = 428;
@@ -299,6 +299,39 @@ UINT Hacks::GetWeaponSkin(const short Index)
 		break;
 	case WEAPON_USP_SILENCER:
 		PaintKit = 504;
+		break;
+	case WEAPON_CZ75A:
+		PaintKit = 12;
+		break;
+	case WEAPON_SG556:
+		PaintKit = 487;
+		break;
+	case WEAPON_SSG08:
+		PaintKit = 624;
+		break;
+	case WEAPON_MP7:
+		PaintKit = 696;
+		break;
+	case WEAPON_MP9:
+		PaintKit = 482;
+		break;
+	case WEAPON_BIZON:
+		PaintKit = 542;
+		break;
+	case WEAPON_UMP45:
+		PaintKit = 169;
+		break;
+	case WEAPON_M249:
+		PaintKit = 75;
+		break;
+	case WEAPON_NEGEV:
+		PaintKit = 432;
+		break;
+	case WEAPON_SAWEDOFF:
+		PaintKit = 204;
+		break;
+	case WEAPON_XM1014:
+		PaintKit = 706;
 		break;
 	default:
 		break;
