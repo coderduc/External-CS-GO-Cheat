@@ -345,58 +345,57 @@ void Hacks::skinChanger(const short knifeIndex, const UINT knifeSkin)
 	const float Wear = 0.0001f;
 	const int StatTrack = 1337;
 	static UINT ModelIndex = 0;
-	DWORD Local = 0;
+	static DWORD Local = 0;
 
-	while (!GetAsyncKeyState(VK_F8))
+	DWORD tempPlayer = readMem<DWORD>((DWORD)client.modBaseAddr + dwLocalPlayer);
+	if (tempPlayer != Local)
 	{
-		DWORD tempPlayer = readMem<DWORD>((DWORD)client.modBaseAddr + dwLocalPlayer);
-		if (tempPlayer != Local)
-		{
-			Local = tempPlayer;
-		}
-		while (!ModelIndex)
-		{
-			ModelIndex = GetModelIndex(knifeIndex);
-		}
-		for (UINT i = 0; i < 8; i++)
-		{
-			DWORD Weapon = readMem<DWORD>(Local + var.m_hMyWeapons + i * 0x4) & 0xFFF;
-			Weapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (Weapon - 1) * 0x10);
-			if (!Weapon) { continue; }
-			short WeaponID = readMem<short>(Weapon + var.m_iItemDefinitionIndex);
-			UINT weaponSkin = GetWeaponSkin(WeaponID);
-
-			if (WeaponID == WEAPON_KNIFE || WeaponID == WEAPON_KNIFE_T || WeaponID == knifeIndex)
-			{
-				writeMem<short>(Weapon + var.m_iItemDefinitionIndex, knifeIndex);
-				writeMem<UINT>(Weapon + var.m_nModelIndex, ModelIndex);
-				writeMem<UINT>(Weapon + var.m_iViewModelIndex, ModelIndex);
-				writeMem<int>(Weapon + var.m_iEntityQuality, EntityQuality);
-				weaponSkin = knifeSkin;
-			}
-			if (weaponSkin)
-			{
-				writeMem<int>(Weapon + var.m_iItemIDHigh, itemIDHigh);
-				writeMem<UINT>(Weapon + var.m_nFallbackPaintKit, weaponSkin);
-				writeMem<float>(Weapon + var.m_flFallbackWear, Wear);
-				writeMem<int>(Weapon + var.m_nFallbackStatTrak, StatTrack);
-			}
-		}
-
-		DWORD activeWeapon = readMem<DWORD>(Local + var.m_hActiveWeapon) & 0xfff;
-		activeWeapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (activeWeapon - 1) * 0x10);
-		if (!activeWeapon) { continue; }
-
-		short weaponIndex = readMem<short>(activeWeapon + var.m_iItemDefinitionIndex);
-		if (weaponIndex != knifeIndex) { continue; }
-
-		DWORD knifeViewModel = readMem<DWORD>(localPlayer + var.m_hViewModel) & 0xfff;
-		knifeViewModel = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (knifeViewModel - 1) * 0x10);
-		if (knifeViewModel == 0) { continue; }
-
-		writeMem<UINT>(knifeViewModel + var.m_nModelIndex, ModelIndex);
+		Local = tempPlayer;
+		ModelIndex = 0;
 	}
+	while (!ModelIndex)
+	{
+		ModelIndex = GetModelIndex(knifeIndex);
+	}
+	for (UINT i = 0; i < 8; i++)
+	{
+		DWORD Weapon = readMem<DWORD>(Local + var.m_hMyWeapons + i * 0x4) & 0xFFF;
+		Weapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (Weapon - 1) * 0x10);
+		if (!Weapon) { continue; }
+		short WeaponID = readMem<short>(Weapon + var.m_iItemDefinitionIndex);
+		UINT weaponSkin = GetWeaponSkin(WeaponID);
+
+		if (WeaponID == WEAPON_KNIFE || WeaponID == WEAPON_KNIFE_T || WeaponID == knifeIndex)
+		{
+			writeMem<short>(Weapon + var.m_iItemDefinitionIndex, knifeIndex);
+			writeMem<UINT>(Weapon + var.m_nModelIndex, ModelIndex);
+			writeMem<UINT>(Weapon + var.m_iViewModelIndex, ModelIndex);
+			writeMem<int>(Weapon + var.m_iEntityQuality, EntityQuality);
+			weaponSkin = knifeSkin;
+		}
+		if (weaponSkin)
+		{
+			writeMem<int>(Weapon + var.m_iItemIDHigh, itemIDHigh);
+			writeMem<UINT>(Weapon + var.m_nFallbackPaintKit, weaponSkin);
+			writeMem<float>(Weapon + var.m_flFallbackWear, Wear);
+			writeMem<int>(Weapon + var.m_nFallbackStatTrak, StatTrack);
+		}
+	}
+
+	DWORD activeWeapon = readMem<DWORD>(Local + var.m_hActiveWeapon) & 0xfff;
+	activeWeapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (activeWeapon - 1) * 0x10);
+	if (!activeWeapon) return;
+
+	short weaponIndex = readMem<short>(activeWeapon + var.m_iItemDefinitionIndex);
+	if (weaponIndex != knifeIndex) return;
+
+	DWORD knifeViewModel = readMem<DWORD>(localPlayer + var.m_hViewModel) & 0xfff;
+	knifeViewModel = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (knifeViewModel - 1) * 0x10);
+	if (knifeViewModel == 0) return;
+
+	writeMem<UINT>(knifeViewModel + var.m_nModelIndex, ModelIndex);
 }
+
 
 Vector3 Hacks::PlayerVelocity() {
 	return readMem<Vector3>(localPlayer + var.m_vecVelocity);
