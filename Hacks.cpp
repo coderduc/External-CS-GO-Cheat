@@ -17,7 +17,7 @@ public:
 	}
 	template <class _W>
 	const data_cv& operator << (_W var) {
-		WriteProcessMemory(FindPattern::pHandle, (LPVOID)base, var, sizeof(var), 0);s
+		WriteProcessMemory(FindPattern::pHandle, (LPVOID)base, var, sizeof(var), 0); s
 	}
 };
 
@@ -46,7 +46,7 @@ void Hacks::EntryPoint()
 	{
 		Prepare();
 		//NoFlash()
-		skinChanger(507,561);
+		skinChanger(507, 561);
 		//TriggerBot();
 		//Bunnyhop();
 		//NoFlash();
@@ -151,7 +151,6 @@ UINT Hacks::GetModelIndexByName(const char* modelName)
 			return i;
 		}
 	}
-
 	return 0;
 }
 
@@ -341,21 +340,27 @@ UINT Hacks::GetWeaponSkin(const short Index)
 
 void Hacks::skinChanger(const short knifeIndex, const UINT knifeSkin)
 {
-	if (GetAsyncKeyState(VK_F2) & 1) ForceUpdate();
 	const int itemIDHigh = -1;
 	const int EntityQuality = 3;
 	const float Wear = 0.0001f;
 	const int StatTrack = 1337;
-	UINT ModelIndex = 0;
+	static UINT ModelIndex = 0;
+	DWORD Local = 0;
+
 	while (!GetAsyncKeyState(VK_F8))
 	{
+		DWORD tempPlayer = readMem<DWORD>((DWORD)client.modBaseAddr + dwLocalPlayer);
+		if (tempPlayer != Local)
+		{
+			Local = tempPlayer;
+		}
 		while (!ModelIndex)
 		{
 			ModelIndex = GetModelIndex(knifeIndex);
 		}
 		for (UINT i = 0; i < 8; i++)
 		{
-			DWORD Weapon = readMem<DWORD>(localPlayer + var.m_hMyWeapons + i * 0x4) & 0xFFF;
+			DWORD Weapon = readMem<DWORD>(Local + var.m_hMyWeapons + i * 0x4) & 0xFFF;
 			Weapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (Weapon - 1) * 0x10);
 			if (!Weapon) { continue; }
 			short WeaponID = readMem<short>(Weapon + var.m_iItemDefinitionIndex);
@@ -378,7 +383,7 @@ void Hacks::skinChanger(const short knifeIndex, const UINT knifeSkin)
 			}
 		}
 
-		DWORD activeWeapon = readMem<DWORD>(localPlayer + var.m_hActiveWeapon) & 0xfff;
+		DWORD activeWeapon = readMem<DWORD>(Local + var.m_hActiveWeapon) & 0xfff;
 		activeWeapon = readMem<DWORD>((DWORD)client.modBaseAddr + dwEntityList + (activeWeapon - 1) * 0x10);
 		if (!activeWeapon) { continue; }
 
